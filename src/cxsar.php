@@ -67,6 +67,27 @@ class Cxsar {
         return isset($_SESSION['logged_in']);
     }
 
+    function find_project_by_hash($hash) {
+        $query = "SELECT * FROM `projects` WHERE `product_hash`='$hash'";
+
+
+        $res = $this->execute_query($query) or die("Error!: " . mysqli_error($this->connection));
+
+        if($res === false) {
+            echo ":query failed";
+            return null;
+        }
+
+        $result = $res->fetch_array();
+
+        if(sizeof($result) == 0) {
+            echo ":nothing returned..";
+            return null;
+        }
+
+        return $result;
+    }
+
     function current_user_has_projects() {
         $id = $_SESSION['id'];
 
@@ -101,6 +122,9 @@ class Cxsar {
         $res = $this->execute_query($query) or die("Error! " . mysqli_error($this->connection));
 
         $result = $res->fetch_array();
+
+        if($result == null)
+            return false;
 
         if(sizeof($result) == 0)
             return false;
@@ -203,6 +227,44 @@ class Cxsar {
         $this->execute_query($query) or die ("Error! " . mysqli_error($this->connection));
 
         return true;
+    }
+
+    function get_project_by_projectid($id) {
+        $query = "SELECT `product_file_path` FROM `projects` WHERE `product_id`='$id'";
+
+        $res = $this->execute_query($query) or die ("BAD REQ(001): Invalid paramater.");
+
+        $res = $res->fetch_array();
+
+        if($res === null)
+            return null;
+
+        return $res;
+    }
+
+    function project_is_hwid_whitelisted($project_id, $hwid)
+    {
+        $path_to_hwid_file = $this->get_project_by_projectid($project_id);
+
+        if($path_to_hwid_file === null)
+            return false;
+
+        $path = $path_to_hwid_file['product_file_path'] . "hwid.txt";
+        $file = fopen($path, 'r');
+
+        while(!feof($file)) {
+            $line = fgets($file);
+
+            // hwid matches
+            if(strcmp($line, $hwid) == 0)
+            {
+                fclose($file);
+                return true;
+            }
+        }
+
+        fclose($file);
+        return false;
     }
 
     function project_has_hwid_protection($project_id)

@@ -1,5 +1,4 @@
 <?php
-session_start();
 
 include 'src/cxsar.php';
 $cxsar = Cxsar::getInstance();
@@ -74,7 +73,7 @@ if (isset($_POST['login'])) {
                 move_uploaded_file($fileTempPath,  $new_filename);
 
                 // register the new project
-                $cxsar->register_new_project($_POST['projectName'], $_SESSION['id'], $file_hash, $new_filename);
+                $cxsar->register_new_project($_POST['projectName'], $_SESSION['id'], $file_hash, $path_to_file);
                 $successful = true;
                 $error = "Succesfully created your new project!";
             }
@@ -86,6 +85,9 @@ if (isset($_POST['login'])) {
     }
 } else if (isset($_POST['delete'])) {
     $id_to_delete = $_POST['proj'];
+
+    // sanitize
+    $id_to_delete = mysqli_real_escape_string($cxsar->get_connection(), $id_to_delete);
 
     if ($cxsar->does_user_own_project($id_to_delete)) {
         $project = $cxsar->fetch_project_from_current_user($id_to_delete);
@@ -119,11 +121,11 @@ if (isset($_POST['login'])) {
 <!DOCTYPE html>
 
 <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>    
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <script src="js/bootstrap.min.js"></script>
-
     <title>Cxsar Project</title>
-</head>
+</head>     
 
 <body>
     <div class="p-5 text-center bg-dark text-white" style="margin-bottom: 30px;">
@@ -179,8 +181,9 @@ if (isset($_POST['login'])) {
                                     echo "<td>$hash</td>";
                                     echo "<td>";
 
-                                    if($cxsar->project_has_hwid_protection($project['product_id']))
+                                    if($cxsar->project_has_hwid_protection($project['product_id'])) {
                                         echo "Yes";
+                                    }
                                     else
                                         echo "No";
                                     echo "</td>";
@@ -196,6 +199,7 @@ if (isset($_POST['login'])) {
 
                     <?php endif ?>
                 </div>
+
                 <div class="col-md-6 container border border-2">
                     <h2 class="m-4">Create project</h2>
 
