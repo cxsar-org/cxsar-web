@@ -6,10 +6,8 @@ $cxsar = Cxsar::getInstance();
 $error = null;
 $successful = false;
 
-if(isset($_POST['register']))
-{
-    if($cxsar->is_a_session_logged_in())
-    {
+if (isset($_POST['register'])) {
+    if ($cxsar->is_a_session_logged_in()) {
         $error = "You're already logged in...";
     } else {
         // Get input
@@ -18,9 +16,10 @@ if(isset($_POST['register']))
         $pass = $_POST['password'];
 
         // check if the email is an actual email (not a full on check)
-        if(strstr($em, "@") === false)
-        {
+        if (strstr($em, "@") === false) {
             $error = "Incorrect e-mail formatting";
+        } else if (strlen($pass) < 8) {
+            $error = "Passwords should be at least 8 characters long";
         } else {
             // sanitize the input
             $em = mysqli_real_escape_string($cxsar->get_connection(), $em);
@@ -31,8 +30,7 @@ if(isset($_POST['register']))
             $res = $cxsar->register_new_user($usr, $em, $pass);
 
             // check result
-            if($res === true)
-            {
+            if ($res === true) {
                 $successful = true;
                 $error = "Successfully registered";
             } else {

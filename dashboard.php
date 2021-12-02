@@ -9,7 +9,7 @@ $successful = false;
 // Check if HWID protection was ticked
 function is_hwid_protection_enabled(): bool
 {
-    if(!isset($_POST['hwid-enabled']))
+    if (!isset($_POST['hwid-enabled']))
         return false;
     return $_POST['hwid-enabled'] == "on";
 }
@@ -54,7 +54,7 @@ if (isset($_POST['login'])) {
                 $error = "Project already exists with same file...";
             } else {
                 // create the directory
-                mkdir($path_to_file);
+                mkdir($path_to_file, 0777, true);
 
                 $new_filename = $path_to_file . $new_name;
 
@@ -114,6 +114,52 @@ if (isset($_POST['login'])) {
     } else {
         $error = "Uh oh! You don't own this project!";
     }
+} else if (isset($_POST['dl'])) {
+    $id = $_POST['proj'];
+
+    // sanitize
+    $id = mysqli_real_escape_string($cxsar->get_connection(), $id);
+
+    if ($cxsar->does_user_own_project($id)) {
+        $path_to_stub = $cxsar->generate_jar_stub($id);
+
+        // jic they cancel the download
+        ignore_user_abort(true);
+
+        header('Content-Type: application/octet-stream');
+        header("Content-Transfer-Encoding: Binary");
+        header("Content-disposition: attachment; filename=\"" . basename($path_to_stub) . "\"");
+
+        // flush output buffer
+        ob_clean();
+        flush();
+
+        if (readfile($path_to_stub))
+            unlink($path_to_stub); // delete after its been read out
+
+        die; // make sure to not send the HTML data as well, that would be bad.
+    } else {
+        $error = "You don't own this project!";
+        $successful = false;
+    }
+    // update the project so that it has an HWID file
+} else if (isset($_POST['update'])) {
+    $id = $_POST['proj'];
+    // sanitize
+    $id = mysqli_real_escape_string($cxsar->get_connection(), $id);
+
+    if ($cxsar->does_user_own_project($id)) {
+        $proj = $cxsar->fetch_project_from_current_user($id);
+
+        $path = $proj['product_file_path'];
+
+        // create hwid file
+        $hwid_file = fopen($path . "hwid.txt", 'x+');
+        fclose($hwid_file);
+    } else {
+        $error = "You don't own this project!";
+        $successful = false;
+    }
 }
 ?>
 
@@ -121,13 +167,17 @@ if (isset($_POST['login'])) {
 <!DOCTYPE html>
 
 <head>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <script src="js/bootstrap.min.js"></script>
-    <title>Cxsar Project</title>
-</head>     
 
-<body>
+    <meta name="viewport" content="width=device-width, initial-scale = 0.86, maximum-scale=3.0, minimum-scale=0.86" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <title>Cxsar Project</title>
+</head>
+
+<body style="overflow-x: hidden; width: 100%; position: relative;">
     <div class="p-5 text-center bg-dark text-white" style="margin-bottom: 30px;">
         <h1 class="m-3">Dashboard</h1>
         <h4 class="m-4">Edit or add new projects here</h4>
@@ -151,7 +201,7 @@ if (isset($_POST['login'])) {
         <?php if ($cxsar->is_a_session_logged_in()) : ?>
 
             <div class="d-flex bg-white mb-3">
-                <div class="col-md-6 container border border-2" style="margin-left: -10px; margin-right: 10px;">
+                <div class="col-md-8 container border border-2" style="margin-left: -10px; margin-right: 10px;">
                     <h2 class="m-4">Existing projects </h2>
 
                     <?php if (!$cxsar->current_user_has_projects()) : ?>
@@ -181,17 +231,38 @@ if (isset($_POST['login'])) {
                                     echo "<td>$hash</td>";
                                     echo "<td>";
 
-                                    if($cxsar->project_has_hwid_protection($project['product_id'])) {
+                                    if ($cxsar->project_has_hwid_protection($project['product_id'])) {
                                         echo "Yes";
-                                    }
-                                    else
+                                    } else
                                         echo "No";
                                     echo "</td>";
 
-                                    echo "<td><form action='', method='post'><input type='submit' name='delete' class='btn btn-primary' value='Delete'/>
+                                    echo "<td>
+                                        
+                                    <form action='', method='post'><input type='submit' name='delete' class='btn btn-primary' value='Delete'/>
                                         <input type='number' name='proj' value='{$project['product_id']}' hidden></input>
-                                        </form></td>";
-                                    echo "</tr>";
+                                        </form>
+                                        </td>
+                                    ";
+
+                                    echo "<td><form action='' method='post'><input type='submit' name='dl' class='btn btn-primary' value='Download'/>
+                                    <input type='number' name='proj' value='{$project['product_id']}' hidden></input></form></td>";
+
+                                    if ($cxsar->project_has_hwid_protection($project['product_id'])) {
+                                        echo "<td>
+                                        <form action='hwid.php' method='post'><input type='submit' name='' class='btn btn-primary' value='HWIDs'/>
+                                        <input type='number' name='proj' value='{$project['product_id']}' hidden></input>
+                                        </form>
+                                        </td>";
+                                        echo "</tr>";
+                                    } else {
+                                        echo "<td>
+                                        <form action='' method='post'><input type='submit' name='update' class='btn btn-primary' value='Enable HWID'/>
+                                        <input type='number' name='proj' value='{$project['product_id']}' hidden></input>
+                                        </form>
+                                        </td>";
+                                        echo "</tr>";
+                                    }
                                 }
                                 ?>
                             </tbody>
@@ -200,7 +271,7 @@ if (isset($_POST['login'])) {
                     <?php endif ?>
                 </div>
 
-                <div class="col-md-6 container border border-2">
+                <div class="col-md-4 container border border-2">
                     <h2 class="m-4">Create project</h2>
 
                     <form action="" method="post" enctype="multipart/form-data">
@@ -249,4 +320,11 @@ if (isset($_POST['login'])) {
 
         <?php endif ?>
     </div>
+
+    <script>
+        // Prevents the form resubmission pop-up from occuring when refreshing
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    </script>
 </body>
