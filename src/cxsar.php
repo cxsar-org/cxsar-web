@@ -242,7 +242,7 @@ class Cxsar
 
     function get_project_by_projectid($id)
     {
-        $query = "SELECT `product_file_path` FROM `projects` WHERE `product_id`='$id'";
+        $query = "SELECT * FROM `projects` WHERE `product_id`='$id'";
 
         $res = $this->execute_query($query) or die("BAD REQ(001): Invalid paramater.");
 
@@ -370,6 +370,15 @@ class Cxsar
             return false;
 
         return file_exists($res['product_file_path'] . "hwid.txt");
+    }
+
+    function get_project_name($project_id) {
+        $proj = $this->get_project_by_projectid($project_id);
+
+        if($proj === null)
+            return "[name]";
+
+        return $proj['product_name'];
     }
 
     function generate_jar_stub($project_id)

@@ -62,7 +62,7 @@ if (isset($_POST['delete'])) {
 <body>
     <div class="p-5 text-center bg-dark text-white" style="margin-bottom: 30px;">
         <h1 class="m-2">HWID</h1>
-        <h4 class="m-3">Add or remove HWIDs here</h4>
+        <h4 class="m-3">Add or remove HWIDs for "<?php echo $cxsar->get_project_name($_POST['proj']); ?>" here</h4>
         <a href="dashboard.php">
             <button name="dashboard" class="btn btn-primary" href="dashboard.php" style="margin-bottom: 5px;">Dashboard</button>
         </a>
@@ -110,29 +110,31 @@ if (isset($_POST['delete'])) {
 
 
         <h2 class="m-4">Add</h2>
-        <form action='' method='post'>
-            <div class="mb-3">
-                <input type='text' class="form-control" name='hwid'>HWID</input>
-            </div>
+        <div class="col-md-12 text-center">
+            <form action='' method='post'>
+                <div class="mb-3">
+                    <input type='text' class="form-control" name='hwid'>HWID</input>
+                </div>
 
-            <div class="mb-3">
-                <input type='number' name='proj' value='<?php echo $_POST['proj']; ?>' hidden />
-            </div>
-            <div class="mb-3">
-                <input type='submit' name='add' class="btn btn-primary" value="Add" />
-            </div>
+                <div class="mb-3">
+                    <input type='number' name='proj' value='<?php echo $_POST['proj']; ?>' hidden />
+                </div>
+                <div class="mb-3">
+                    <input type='submit' name='add' class="btn btn-primary" value="Add" />
+                </div>
 
-        </form>
-        <form action='' method='post'>
+            </form>
+            <form action='' method='post'>
 
-            <div class="mb-3">
-                <input type='number' name='proj' value='<?php echo $_POST['proj']; ?>' hidden />
-            </div>
+                <div class="mb-3">
+                    <input type='number' name='proj' value='<?php echo $_POST['proj']; ?>' hidden />
+                </div>
 
-            <div class="mb-3">
-                <input type='submit' name='disable' class="btn btn-primary" value="Disable HWID Protection" />
-            </div>
-        </form>
+                <div class="mb-3">
+                    <input type='submit' name='disable' class="btn btn-primary" value="Disable HWID Protection" />
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
