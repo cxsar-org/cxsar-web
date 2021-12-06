@@ -87,6 +87,9 @@ class Cxsar
 
         $result = $res->fetch_array();
 
+        if($result === null)
+            return null;
+
         if (sizeof($result) == 0) {
             echo ":nothing returned..";
             return null;
@@ -162,6 +165,9 @@ class Cxsar
 
         $res = $this->execute_query($query) or die("Error: " . mysqli_error($this->connection));
 
+        if($res === false)
+            return false;
+
         $res = mysqli_fetch_array($res);
 
         $salt = $res['salt'];
@@ -172,7 +178,13 @@ class Cxsar
         $query = "SELECT `id`, `username` FROM `users` WHERE `email`='$email' and `hashed_password`='$salted_pw'";
         $res = $this->execute_query($query) or die("error: " . mysqli_error($this->connection));
 
+        if($res === false)
+            return false;
+
         $res = mysqli_fetch_array($res);
+
+        if($res === null)
+            return false;
 
         // There was a user found
         if (sizeof($res) != 0) {
