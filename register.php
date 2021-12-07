@@ -20,6 +20,8 @@ if (isset($_POST['register'])) {
             $error = "Incorrect e-mail formatting";
         } else if (strlen($pass) < 8) {
             $error = "Passwords should be at least 8 characters long";
+        } else if(strlen($usr) < 3) {
+            $error = "Name must be at least 3 characters long";
         } else {
             // sanitize the input
             $em = mysqli_real_escape_string($cxsar->get_connection(), $em);
